@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AeroOps Dashboard
 
-## Getting Started
+Next.js 14 dashboard for **live HVAC / duct inspection telemetry**, 3D point-cloud map (PLY), multi-layer field views, and **Ops AI** (Google Gemini) with server-side API key.
 
-First, run the development server:
+## Stack
+
+- **Next.js** (App Router), TypeScript, Tailwind CSS  
+- **Zustand** for telemetry / map / UI state  
+- **React Three Fiber** + **Drei** for the center viewport  
+- **Recharts** sparklines (client-only)  
+- **Air-Audit** backend via same-origin proxy: `/api/air-audit/*`  
+- **Gemini** via `/api/ai/chat` (key in `.env.local` only)
+
+## Quick start
 
 ```bash
+npm install
+cp .env.local.example .env.local
+# Edit .env.local: API base URL, optional GEMINI_API_KEY, etc.
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+See **[`.env.local.example`](.env.local.example)** for all options. Common entries:
+
+| Variable | Purpose |
+|----------|---------|
+| `NEXT_PUBLIC_AIR_AUDIT_API_BASE` | FastAPI / Air-Audit base URL (client polls through Next proxy) |
+| `GEMINI_API_KEY` | Google AI Studio key for Ops AI (**never commit**; `.env*.local` is gitignored) |
+| `GEMINI_MODEL` | Optional; server tries several model ids if unset |
+| `NEXT_PUBLIC_SHADER_INTRO` | Set to `1` only if you want the WebGL splash before the dashboard |
+
+**Do not** commit `.env.local` or paste API keys into the repo.
+
+## Scripts
+
+```bash
+npm run dev    # development
+npm run build  # production build
+npm run start  # run production build
+npm run lint
+```
+
+## Repository
+
+Remote: **https://github.com/Akrishh06/AeroOps-Dashboard**
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js Documentation](https://nextjs.org/docs)

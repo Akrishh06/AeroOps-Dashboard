@@ -3,25 +3,59 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --void: #060708;
+  --panel: rgba(10, 11, 13, 0.45);
+  --line: rgba(255, 255, 255, 0.045);
+  --mist: rgba(255, 255, 255, 0.03);
+  --ink: rgba(236, 238, 241, 0.88);
+  --dim: rgba(236, 238, 241, 0.38);
+  --accent: #5fa8b3;
+  --accent-foreground: #061014;
+  --warn: #b8922a;
+  --background: var(--void);
+  --foreground: var(--ink);
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #5fa8b3;
+  --primary: #5fa8b3;
+  --primary-foreground: #061014;
+  --secondary: rgba(255, 255, 255, 0.08);
+  --secondary-foreground: var(--ink);
+  --destructive: #c45c5c;
+  --destructive-foreground: #fafafa;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
   color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background: radial-gradient(
+      100% 70% at 50% -8%,
+      #14181d 0%,
+      var(--void) 48%,
+      #030304 100%
+    ),
+    var(--void);
+  font-feature-settings: "ss01" on, "cv02" on;
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .rail-edge {
+    border-color: rgba(255, 255, 255, 0.04);
+  }
+
+  .micro-label {
+    @apply text-[9px] font-medium uppercase tracking-[0.2em] text-dim;
+  }
+
+  .instrument-value {
+    @apply font-mono text-[12px] font-normal tracking-tightish text-ink tabular-nums;
+  }
+
+  .instrument-unit {
+    @apply font-mono text-[10px] font-normal tabular-nums text-dim opacity-80;
   }
 }
