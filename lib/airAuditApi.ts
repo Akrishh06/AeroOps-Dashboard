@@ -1,3 +1,4 @@
+import { normalizeFindingsList } from "@/lib/normalizeFinding";
 import type { MapLatestResponse } from "@/types/map";
 import type { Finding, TelemetryHistoryPoint, TelemetrySnapshot } from "@/types/telemetry";
 
@@ -121,7 +122,9 @@ export function getTelemetrySnapshot(): Promise<TelemetrySnapshot> {
 }
 
 export function getFindings(): Promise<Finding[]> {
-  return fetchJson<Finding[]>("/api/v1/findings");
+  return fetchJson<unknown>("/api/v1/findings").then((raw) =>
+    normalizeFindingsList(raw),
+  );
 }
 
 export function getHistory(): Promise<TelemetryHistoryPoint[]> {

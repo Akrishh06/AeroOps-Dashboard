@@ -57,16 +57,17 @@ export function telemetryToFieldScalars(
     case "temperature":
       return {
         kind,
-        primary: clamp01((t.internal_temp_c - 18) / 24),
-        secondary: clamp01((t.ambient_temp_c - 14) / 18),
+        /** ~16–42 °C duct-relevant span → clearer cold→hot readout */
+        primary: clamp01((t.internal_temp_c - 16) / 26),
+        secondary: clamp01((t.ambient_temp_c - 12) / 22),
       };
     case "pm25": {
-      const pm = clamp01(t.particulate_pm25 / 85);
-      const aqi = clamp01(t.aqi_score / 150);
+      const pm = clamp01(t.particulate_pm25 / 55);
+      const aqi = clamp01(t.aqi_score / 120);
       return {
         kind,
-        primary: clamp01(pm * 0.62 + aqi * 0.38),
-        secondary: aqi,
+        primary: clamp01(pm * 0.55 + aqi * 0.45),
+        secondary: clamp01((t.particulate_pm25 - 12) / 50),
       };
     }
     case "mold": {
@@ -74,18 +75,18 @@ export function telemetryToFieldScalars(
       const heur = moldRisk01(t.humidity_pct, t.internal_temp_c);
       return {
         kind,
-        primary: clamp01(model * 0.72 + heur * 0.28),
+        primary: clamp01(model * 0.68 + heur * 0.32),
         secondary: clamp01(t.humidity_pct / 100),
       };
     }
     case "airflow":
-      return { kind, primary: clamp01(t.airflow_mps / 3), secondary: 0 };
+      return { kind, primary: clamp01(t.airflow_mps / 4.5), secondary: 0 };
     case "vibration":
-      return { kind, primary: clamp01(t.vibration_mm_s / 10), secondary: 0 };
+      return { kind, primary: clamp01(t.vibration_mm_s / 12), secondary: 0 };
     case "pressure":
       return {
         kind,
-        primary: clamp01((t.static_pressure_pa + 35) / 70),
+        primary: clamp01((t.static_pressure_pa + 50) / 100),
         secondary: 0,
       };
     default:

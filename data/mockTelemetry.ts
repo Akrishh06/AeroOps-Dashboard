@@ -43,6 +43,8 @@ export const SEED_FINDINGS: Finding[] = [
     location: { x: 0.55, y: -0.22, z: 1.95 },
     note: "Brush streak on floor panel seam.",
     at_ms: Date.now() - 120_000,
+    maintenance_note:
+      "Photo-document the seam; schedule liner patch if wear depth exceeds site SOP. Re-scan after repair.",
   },
   {
     id: "f2",
@@ -53,5 +55,7 @@ export const SEED_FINDINGS: Finding[] = [
     location: { x: -0.31, y: 0.1, z: 3.02 },
     note: "0.8 mm gap at joint clip.",
     at_ms: Date.now() - 340_000,
+    duct_section: "Branch takeoff · B2",
+    recommended_action: "Re-torque clips to spec; apply approved duct sealant; verify leakage class on next balance test.",
   },
 ];

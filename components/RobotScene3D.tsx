@@ -1,15 +1,18 @@
 "use client";
 
-import { Environment, Grid, Html, OrbitControls } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
+import { Environment, Grid, Html, useCursor } from "@react-three/drei";
+import { Canvas, type ThreeEvent } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 
+import { FindingIssueCard } from "@/components/FindingIssueCard";
+import { MapCameraFocus } from "@/components/MapCameraFocus";
 import { MapPlyFromUrl, RgbFeedPlane } from "@/components/MapEnvironment3D";
+import { findingLocationToWorld } from "@/lib/mapFindingWorld";
 import { moldRisk01 } from "@/lib/mapViewportField";
 import { cn } from "@/lib/utils";
 import { useTelemetryStore } from "@/store/telemetryStore";
-import type { MapViewportMode, TelemetrySnapshot } from "@/types/telemetry";
+import type { MapViewportMode, TelemetrySnapshot, Finding } from "@/types/telemetry";
 
 function PlaceholderFloor() {
   return (
@@ -35,31 +38,113 @@ function PlaceholderFloor() {
   );
 }
 
+function FindingMapBubble({ finding }: { finding: Finding }) {
+  const setSelected = useTelemetryStore((s) => s.setSelectedFindingId);
+  const snap = useTelemetryStore((s) => s.displaySnapshot);
+  const siteContext = {
+    site_name: snap.site_name,
+    duct_section: snap.duct_section,
+    inspection_id: snap.inspection_id,
+    asset_id: snap.asset_id,
+  };
+  return (
+    <div
+      className="w-[min(92vw,280px)] select-text"
+      style={{ pointerEvents: "auto" }}
+      onPointerDown={(e) => e.stopPropagation()}
+    >
+      <div className="mb-0.5 flex justify-end">
+        <button
+          type="button"
+          className="rounded px-2 py-0.5 text-[14px] leading-none text-zinc-400 hover:bg-white/10 hover:text-zinc-200"
+          onClick={() => setSelected(null)}
+          aria-label="Close finding"
+        >
+          ×
+        </button>
+      </div>
+      <FindingIssueCard
+        finding={finding}
+        siteContext={siteContext}
+        className="border border-white/[0.08] bg-[#0f1218]/98 shadow-2xl"
+      />
+    </div>
+  );
+}
+
 function FindingAndRobotMarkers() {
   const findings = useTelemetryStore((s) => s.findings);
   const mapFrame = useTelemetryStore((s) => s.mapFrame);
   const robotPos = useTelemetryStore((s) => s.displaySnapshot.position);
+  const selectedFindingId = useTelemetryStore((s) => s.selectedFindingId);
+  const setSelectedFindingId = useTelemetryStore((s) => s.setSelectedFindingId);
+  const requestMapFocusAt = useTelemetryStore((s) => s.requestMapFocusAt);
+  const [hoverId, setHoverId] = useState<string | null>(null);
+  useCursor(!!hoverId);
+
   if (!mapFrame) return null;
   const [cx, cy, cz] = mapFrame.plyWorldCenter;
   const s = mapFrame.uniformScale;
   const rot: [number, number, number] = [-Math.PI / 2, 0, 0];
+
+  const onPickFinding = (f: Finding, e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    setSelectedFindingId(f.id);
+    const w = findingLocationToWorld(f.location, mapFrame);
+    requestMapFocusAt(w);
+  };
+
   return (
     <group rotation={rot} scale={s}>
-      {findings.map((f) => (
-        <mesh
-          key={f.id}
-          position={[f.location.x - cx, f.location.y - cy, f.location.z - cz]}
-        >
-          <sphereGeometry args={[0.09, 14, 14]} />
-          <meshStandardMaterial
-            color="#aa4422"
-            emissive="#ff7744"
-            emissiveIntensity={0.42}
-            metalness={0.15}
-            roughness={0.45}
-          />
-        </mesh>
-      ))}
+      {findings.map((f) => {
+        const pos: [number, number, number] = [
+          f.location.x - cx,
+          f.location.y - cy,
+          f.location.z - cz,
+        ];
+        const selected = f.id === selectedFindingId;
+        return (
+          <group key={f.id} position={pos}>
+            <group
+              onClick={(e) => onPickFinding(f, e)}
+              onPointerOver={(e) => {
+                e.stopPropagation();
+                setHoverId(f.id);
+              }}
+              onPointerOut={(e) => {
+                e.stopPropagation();
+                setHoverId((id) => (id === f.id ? null : id));
+              }}
+            >
+              <mesh scale={selected ? 1.35 : 1}>
+                <sphereGeometry args={[0.22, 12, 12]} />
+                <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+              </mesh>
+              <mesh scale={selected ? 1.2 : 1}>
+                <sphereGeometry args={[0.09, 14, 14]} />
+                <meshStandardMaterial
+                  color={selected ? "#cc5533" : "#aa4422"}
+                  emissive="#ff7744"
+                  emissiveIntensity={selected ? 0.62 : 0.42}
+                  metalness={0.15}
+                  roughness={0.45}
+                />
+              </mesh>
+            </group>
+            {selected ? (
+              <Html
+                position={[0, 0.32, 0]}
+                center
+                distanceFactor={9}
+                style={{ pointerEvents: "none" }}
+                zIndexRange={[100, 0]}
+              >
+                <FindingMapBubble finding={f} />
+              </Html>
+            ) : null}
+          </group>
+        );
+      })}
       <mesh
         position={[
           robotPos.x - cx,
@@ -85,6 +170,8 @@ function BuildingFromMapApi() {
   const rgbUrl = useTelemetryStore((s) => s.mapAssets?.rgbUrl ?? null);
   const mapViewportMode = useTelemetryStore((s) => s.mapViewportMode);
   const displaySnapshot = useTelemetryStore((s) => s.displaySnapshot);
+  const findings = useTelemetryStore((s) => s.findings);
+  const mapFrame = useTelemetryStore((s) => s.mapFrame);
   const setMapFrame = useTelemetryStore((s) => s.setMapFrame);
   const fieldTelemetry = useMemo(
     () => ({
@@ -128,6 +215,8 @@ function BuildingFromMapApi() {
           url={plyUrl}
           mode={mapViewportMode}
           fieldTelemetry={fieldTelemetry}
+          findings={findings}
+          hotspotFrame={mapFrame}
           onResolved={() => setMapReady(true)}
           onFailed={() => {
             setMapReady(false);
@@ -336,7 +425,7 @@ function MapViewportTabs() {
             role="tab"
             aria-selected={mode === t.id}
             className={cn(
-              "rounded-md px-2 py-1 text-[10px] font-medium tracking-wide transition-colors sm:px-2.5 sm:text-[11px]",
+              "rounded-md px-2 py-1 font-sans text-[10px] font-medium tracking-wide transition-colors sm:px-2.5 sm:text-[11px]",
               mode === t.id
                 ? "bg-white/[0.12] text-zinc-100"
                 : "text-zinc-500 hover:text-zinc-300",
@@ -379,16 +468,12 @@ export default function RobotScene3D() {
           near: 0.08,
           far: 200,
         }}
+        onPointerMissed={() => {
+          useTelemetryStore.getState().setSelectedFindingId(null);
+        }}
       >
         <fog attach="fog" args={["#12151c", 18, 120]} />
-        <OrbitControls
-          makeDefault
-          target={[0, 0.2, 0]}
-          minDistance={1.2}
-          maxDistance={48}
-          maxPolarAngle={Math.PI * 0.52}
-          enablePan
-        />
+        <MapCameraFocus />
         <SceneContent />
       </Canvas>
     </div>

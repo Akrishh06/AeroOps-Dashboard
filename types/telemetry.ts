@@ -79,6 +79,12 @@ export interface Finding {
   location: Vec3;
   note: string;
   at_ms: number;
+  /** When set, overrides snapshot duct section for this issue (e.g. from API). */
+  duct_section?: string;
+  /** Free-text maintenance guidance from backend, if provided. */
+  maintenance_note?: string;
+  /** Per-finding recommended action from backend, if provided. */
+  recommended_action?: string;
 }
 
 export interface TelemetryHistoryPoint {

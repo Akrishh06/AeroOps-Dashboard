@@ -3,6 +3,7 @@
 import { Loader2, Sparkles } from "lucide-react";
 import React from "react";
 
+import { FindingsFeed } from "@/components/FindingsFeed";
 import { MorphPanel } from "@/components/ui/ai-input";
 import { Button } from "@/components/ui/button";
 import { buildAiDashboardContext } from "@/lib/buildAiContext";
@@ -25,7 +26,8 @@ const SUMMARIZE_PROMPT =
   "Give a concise operational summary: site/asset, key telemetry highlights, risk level, recommended action, and open findings. Use bullet lists where helpful.";
 
 export function ContextAiRail({ viewMode }: { viewMode: ViewMode }) {
-  const dim = viewMode === "findings";
+  /** Slightly dim this rail only in Context tab so Live / Findings stay readable. */
+  const dim = viewMode === "context";
   const snapshot = useTelemetryStore((s) => s.displaySnapshot);
   const findings = useTelemetryStore((s) => s.findings);
   const history = useTelemetryStore((s) => s.history);
@@ -137,70 +139,93 @@ export function ContextAiRail({ viewMode }: { viewMode: ViewMode }) {
     void runChat(SUMMARIZE_PROMPT, { silent: true });
   }, [runChat]);
 
+  const findingsMode = viewMode === "findings";
+
   return (
     <aside
       className={cn(
-        "flex w-[min(320px,32vw)] shrink-0 flex-col gap-2 overflow-hidden border-l border-white/[0.06] bg-void/60 py-3 pl-2 pr-2 backdrop-blur-sm transition-opacity",
+        "flex h-full min-h-0 w-[min(320px,32vw)] shrink-0 flex-col gap-2 overflow-hidden border-l border-white/[0.06] bg-void/60 py-3 pl-2 pr-2 backdrop-blur-sm transition-opacity",
         dim ? "opacity-75" : "",
       )}
     >
-      <div className="flex shrink-0 items-center justify-between gap-2 px-1">
-        <div className="flex items-center gap-1.5">
-          <Sparkles className="h-3.5 w-3.5 text-accent" strokeWidth={2} />
-          <p className="micro-label text-dim">Ops AI</p>
+      {findingsMode ? (
+        <div className="flex min-h-0 min-w-0 flex-[3] flex-col overflow-hidden px-1">
+          <FindingsFeed
+            findings={findings}
+            siteContext={{
+              site_name: snapshot.site_name,
+              duct_section: snapshot.duct_section,
+              inspection_id: snapshot.inspection_id,
+              asset_id: snapshot.asset_id,
+            }}
+          />
         </div>
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          className="h-7 shrink-0 rounded-md px-2 text-[10px]"
-          disabled={pending}
-          onClick={onSummarize}
-        >
-          Summarize
-        </Button>
-      </div>
+      ) : null}
 
       <div
-        ref={scrollRef}
-        className="min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden px-1 pb-1"
+        className={cn(
+          "flex min-h-0 flex-col gap-2 overflow-hidden",
+          findingsMode ? "flex-[2] border-t border-white/[0.06] pt-2" : "min-h-0 flex-1",
+        )}
       >
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={cn(
-              "rounded-lg border px-2.5 py-2 text-[11px] leading-relaxed",
-              msg.role === "user"
-                ? "border-white/[0.06] bg-panel/90 text-ink/90"
-                : msg.error
-                  ? "border-red-500/25 bg-red-950/20 text-red-200/90"
-                  : "border-white/[0.06] bg-panel/60 text-ink/85",
-            )}
+        <div className="flex shrink-0 items-center justify-between gap-2 px-1">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5 text-accent" strokeWidth={2} />
+            <p className="micro-label text-dim">Ops AI</p>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="h-7 shrink-0 rounded-md px-2 text-[10px]"
+            disabled={pending}
+            onClick={onSummarize}
           >
-            {msg.role === "user" ? (
-              <p className="font-medium text-ink/70">You</p>
-            ) : (
-              <p className="font-medium text-dim">AeroOps AI</p>
-            )}
-            <div className="mt-1 whitespace-pre-wrap">{msg.content}</div>
-          </div>
-        ))}
-        {pending ? (
-          <div className="text-dim flex items-center gap-2 px-1 text-[10px]">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            {pendingKind === "summarize" ? "Summarizing…" : "Thinking…"}
-          </div>
-        ) : null}
-      </div>
+            Summarize
+          </Button>
+        </div>
 
-      <div className="shrink-0 border-t border-white/[0.06] pt-2">
-        <MorphPanel
-          onSendMessage={(text) => runChat(text)}
-          className="px-0"
-        />
-        <p className="mt-1.5 px-1 text-center text-[8px] leading-snug text-zinc-600">
-          Context refreshes each send. API key stays on the server.
-        </p>
+        <div
+          ref={scrollRef}
+          className="min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden px-1 pb-1"
+        >
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={cn(
+                "rounded-lg border px-2.5 py-2 text-[11px] leading-relaxed",
+                msg.role === "user"
+                  ? "border-white/[0.06] bg-panel/90 text-ink/90"
+                  : msg.error
+                    ? "border-red-500/25 bg-red-950/20 text-red-200/90"
+                    : "border-white/[0.06] bg-panel/60 text-ink/85",
+              )}
+            >
+              {msg.role === "user" ? (
+                <p className="font-medium text-ink/70">You</p>
+              ) : (
+                <p className="font-medium text-dim">AeroOps AI</p>
+              )}
+              <div className="mt-1 whitespace-pre-wrap">{msg.content}</div>
+            </div>
+          ))}
+          {pending ? (
+            <div className="text-dim flex items-center gap-2 px-1 text-[10px]">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              {pendingKind === "summarize" ? "Summarizing…" : "Thinking…"}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="shrink-0 border-t border-white/[0.06] pt-2">
+          <MorphPanel
+            onSendMessage={(text) => runChat(text)}
+            className="px-0"
+          />
+          <p className="mt-1.5 px-1 text-center text-[8px] leading-snug text-zinc-600">
+            Context refreshes each send. API key stays on the server.
+          </p>
+        </div>
       </div>
     </aside>
   );

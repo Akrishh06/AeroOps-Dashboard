@@ -10,15 +10,11 @@ function DashboardRoot() {
 }
 
 /**
- * Default: open straight into the dashboard (avoids a long blank/black screen + WebGL failures blocking the app).
- * Opt-in splash: set NEXT_PUBLIC_SHADER_INTRO=1 (and do not set NEXT_PUBLIC_SKIP_SHADER_INTRO=1).
+ * Default: WebGL “AeroOps” splash on every load/refresh, then the dashboard.
+ * Opt out: NEXT_PUBLIC_SKIP_SHADER_INTRO=1 (e.g. if WebGL fails or you want instant dashboard).
  */
 export default function Home() {
-  const skipIntro =
-    process.env.NEXT_PUBLIC_SKIP_SHADER_INTRO === "1" ||
-    process.env.NEXT_PUBLIC_SHADER_INTRO !== "1";
-
-  if (skipIntro) {
+  if (process.env.NEXT_PUBLIC_SKIP_SHADER_INTRO === "1") {
     return <DashboardRoot />;
   }
 

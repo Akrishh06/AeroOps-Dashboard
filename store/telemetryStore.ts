@@ -36,12 +36,20 @@ type State = {
   connected: boolean;
   mapAssets: MapAssets | null;
   mapFrame: MapFrameMeta | null;
+  /** Selected finding for map popup + list highlight. */
+  selectedFindingId: string | null;
+  /** World-space point for OrbitControls camera focus (PLY scene space). */
+  mapFocusTarget: { x: number; y: number; z: number } | null;
+  /** Incremented on each focus request so the camera animates even for the same point. */
+  mapFocusNonce: number;
   setViewMode: (m: ViewMode) => void;
   setMapViewportMode: (m: MapViewportMode) => void;
   setRuntimeMode: (m: RuntimeMode) => void;
   setConnected: (connected: boolean) => void;
   setMapAssets: (m: MapAssets | null) => void;
   setMapFrame: (m: MapFrameMeta | null) => void;
+  setSelectedFindingId: (id: string | null) => void;
+  requestMapFocusAt: (world: { x: number; y: number; z: number }) => void;
   applyTelemetryStep: (snap: TelemetrySnapshot, findings: Finding[]) => void;
   ingestLiveTelemetry: (
     snap: TelemetrySnapshot,
@@ -78,12 +86,21 @@ export const useTelemetryStore = create<State>((set, get) => ({
   connected: true,
   mapAssets: null,
   mapFrame: null,
+  selectedFindingId: null,
+  mapFocusTarget: null,
+  mapFocusNonce: 0,
   setViewMode: (viewMode) => set({ viewMode }),
   setMapViewportMode: (mapViewportMode) => set({ mapViewportMode }),
   setRuntimeMode: (runtimeMode) => set({ runtimeMode }),
   setConnected: (connected) => set({ connected }),
   setMapAssets: (mapAssets) => set({ mapAssets }),
   setMapFrame: (mapFrame) => set({ mapFrame }),
+  setSelectedFindingId: (selectedFindingId) => set({ selectedFindingId }),
+  requestMapFocusAt: (world) =>
+    set((s) => ({
+      mapFocusTarget: world,
+      mapFocusNonce: s.mapFocusNonce + 1,
+    })),
   ingestLiveTelemetry: (snap, findings, historyPoints) => {
     const history =
       historyPoints.length > HISTORY_CAP

@@ -37,7 +37,7 @@ export function TelemetryRailLeft({
   mold_probability_pct: number;
   aqi_score: number;
 }) {
-  const dim = viewMode === "findings";
+  const dim = viewMode === "context";
   return (
     <aside
       className={`flex w-[min(280px,26vw)] shrink-0 flex-col gap-2 overflow-y-auto border-r border-white/[0.06] bg-void/60 px-3 py-3 backdrop-blur-sm transition-opacity ${

@@ -65,7 +65,15 @@ export function ContextRailRight({
         <p className="micro-label mb-1.5 text-dim">Recommended</p>
         <p className="text-[10px] leading-relaxed text-ink/85">{recommended_action}</p>
       </div>
-      <FindingsFeed findings={findings} />
+      <FindingsFeed
+        findings={findings}
+        siteContext={{
+          site_name,
+          duct_section,
+          inspection_id,
+          asset_id,
+        }}
+      />
     </aside>
   );
 }
