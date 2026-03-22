@@ -8,7 +8,7 @@ Next.js 14 dashboard for **live HVAC / duct inspection telemetry**, 3D point-clo
 - **Zustand** for telemetry / map / UI state  
 - **React Three Fiber** + **Drei** for the center viewport  
 - **Recharts** sparklines (client-only)  
-- **Air-Audit** backend via same-origin proxy: `/api/air-audit/*`  
+- **Air-Audit** backend (default: [Render API](https://aeroops-data-enp.onrender.com)) via same-origin proxy: `/api/air-audit/*`  
 - **Gemini** via `/api/ai/chat` (key in `.env.local` only)
 
 ## Quick start
@@ -28,7 +28,7 @@ See **[`.env.local.example`](.env.local.example)** for all options. Common entri
 
 | Variable | Purpose |
 |----------|---------|
-| `NEXT_PUBLIC_AIR_AUDIT_API_BASE` | FastAPI / Air-Audit base URL (client polls through Next proxy) |
+| `NEXT_PUBLIC_AIR_AUDIT_API_BASE` | Air-Audit base URL, e.g. `https://aeroops-data-enp.onrender.com` (see `/docs` on that host) |
 | `GEMINI_API_KEY` | Google AI Studio key for Ops AI (**never commit**; `.env*.local` is gitignored) |
 | `GEMINI_MODEL` | Optional; server tries several model ids if unset |
 | `NEXT_PUBLIC_SKIP_SHADER_INTRO` | Set to `1` to skip the WebGL AeroOps splash and open the dashboard immediately |
